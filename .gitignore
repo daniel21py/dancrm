@@ -36,3 +36,12 @@ pnpm-debug.log*
 
 # TypeScript
 *.tsbuildinfo
+vite.config.d.ts
+
+# Claude Code / AI tooling (locale)
+.mcp.json
+.agents/
+.claude/
+MEMORY/
+Plans/
+skills-lock.json
