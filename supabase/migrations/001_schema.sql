@@ -304,7 +304,7 @@ CREATE TRIGGER trg_tms_sync_updated_at
 -- Ritorna il tenant_id dell'utente corrente
 CREATE OR REPLACE FUNCTION current_tenant_id()
 RETURNS uuid AS $$
-  SELECT tenant_id FROM tenant_members
+  SELECT tenant_id FROM public.tenant_members
   WHERE user_id = auth.uid()
   LIMIT 1;
 $$ LANGUAGE sql SECURITY DEFINER STABLE;
@@ -313,7 +313,7 @@ $$ LANGUAGE sql SECURITY DEFINER STABLE;
 CREATE OR REPLACE FUNCTION has_role(required_role text)
 RETURNS boolean AS $$
   SELECT EXISTS (
-    SELECT 1 FROM tenant_members
+    SELECT 1 FROM public.tenant_members
     WHERE user_id = auth.uid()
     AND role = ANY(
       CASE required_role
@@ -480,12 +480,12 @@ BEGIN
   v_slug := v_slug || '-' || substr(gen_random_uuid()::text, 1, 6);
 
   -- Crea il tenant
-  INSERT INTO tenants (name, slug)
+  INSERT INTO public.tenants (name, slug)
   VALUES (p_tenant_name, v_slug)
   RETURNING id INTO v_tenant_id;
 
   -- Aggiunge l'utente come owner
-  INSERT INTO tenant_members (tenant_id, user_id, role, full_name, joined_at)
+  INSERT INTO public.tenant_members (tenant_id, user_id, role, full_name, joined_at)
   VALUES (v_tenant_id, p_user_id, 'owner', p_full_name, now());
 
   RETURN v_tenant_id;
