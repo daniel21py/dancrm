@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link, useRouterState } from '@tanstack/react-router'
+import { Link, useRouterState, useNavigate } from '@tanstack/react-router'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard,
@@ -33,8 +33,14 @@ const bottomItems = [
 export function Sidebar() {
   const { tenant, member, signOut } = useAuthStore()
   const routerState = useRouterState()
+  const navigate = useNavigate()
   const currentPath = routerState.location.pathname
   const [mobileOpen, setMobileOpen] = useState(false)
+
+  const handleSignOut = async () => {
+    await signOut()
+    navigate({ to: '/login' })
+  }
 
   useEffect(() => {
     setMobileOpen(false)
@@ -171,7 +177,7 @@ export function Sidebar() {
             </div>
           </div>
           <button
-            onClick={signOut}
+            onClick={handleSignOut}
             className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
             title="Esci"
           >
