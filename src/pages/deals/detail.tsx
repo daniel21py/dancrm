@@ -5,6 +5,7 @@ import {
   ArrowLeft, Building2, Calendar, TrendingUp,
   Pencil, Trash2, Target,
 } from 'lucide-react'
+import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 import type { Deal, Company, PipelineStage, Activity } from '@/types/database'
 import { formatCurrency, formatDate, formatDateRelative, cn } from '@/lib/utils'
@@ -85,7 +86,9 @@ export function DealDetailPage() {
       queryClient.invalidateQueries({ queryKey: ['deal', id] })
       queryClient.invalidateQueries({ queryKey: ['deals'] })
       setIsEditing(false)
+      toast.success('Deal aggiornato')
     },
+    onError: () => toast.error('Errore durante il salvataggio'),
   })
 
   const deleteDeal = useMutation({
@@ -96,7 +99,9 @@ export function DealDetailPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['deals'] })
       navigate({ to: '/deals' })
+      toast.success('Deal eliminato')
     },
+    onError: () => toast.error('Errore durante l\'eliminazione'),
   })
 
   const changeStage = useMutation({
@@ -107,7 +112,9 @@ export function DealDetailPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['deal', id] })
       queryClient.invalidateQueries({ queryKey: ['deals'] })
+      toast.success('Stage aggiornato')
     },
+    onError: () => toast.error('Errore durante il salvataggio'),
   })
 
   if (isLoading || !deal) return <Spinner />

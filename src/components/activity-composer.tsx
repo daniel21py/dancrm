@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { X } from 'lucide-react'
+import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 import type { Activity, ActivityType } from '@/types/database'
 import { activityConfig } from './activity-timeline'
@@ -46,7 +47,9 @@ export function ActivityComposer({ companyId, contactId, dealId, tenantId, onCre
       setActiveType(null)
       setForm({ title: '', body: '', duration_min: '' })
       onCreated?.()
+      toast.success('Attivita registrata')
     },
+    onError: () => toast.error('Errore durante il salvataggio'),
   })
 
   return (

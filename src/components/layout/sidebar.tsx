@@ -1,5 +1,6 @@
+import { useState, useEffect } from 'react'
 import { Link, useRouterState } from '@tanstack/react-router'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard,
   Building2,
@@ -10,6 +11,8 @@ import {
   LogOut,
   Zap,
   Search,
+  Menu,
+  X,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/stores/auth'
@@ -31,23 +34,36 @@ export function Sidebar() {
   const { tenant, member, signOut } = useAuthStore()
   const routerState = useRouterState()
   const currentPath = routerState.location.pathname
+  const [mobileOpen, setMobileOpen] = useState(false)
+
+  useEffect(() => {
+    setMobileOpen(false)
+  }, [currentPath])
 
   const openCommandPalette = () => {
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true, bubbles: true }))
   }
 
-  return (
-    <aside className="flex h-screen w-[220px] flex-shrink-0 flex-col border-r border-border bg-card">
-      <div className="flex items-center gap-2.5 px-4 py-4">
-        <div
-          className="flex h-7 w-7 items-center justify-center rounded-lg"
-          style={{ backgroundColor: tenant?.primary_color ?? '#3B82F6' }}
-        >
-          <Zap className="h-3.5 w-3.5 text-white" />
+  const sidebarContent = (
+    <>
+      <div className="flex items-center justify-between px-4 py-4">
+        <div className="flex items-center gap-2.5">
+          <div
+            className="flex h-7 w-7 items-center justify-center rounded-lg"
+            style={{ backgroundColor: tenant?.primary_color ?? '#3B82F6' }}
+          >
+            <Zap className="h-3.5 w-3.5 text-white" />
+          </div>
+          <span className="text-sm font-semibold tracking-tight">
+            {tenant?.name ?? 'DanCRM'}
+          </span>
         </div>
-        <span className="text-sm font-semibold tracking-tight">
-          {tenant?.name ?? 'DanCRM'}
-        </span>
+        <button
+          onClick={() => setMobileOpen(false)}
+          className="rounded-md p-1 text-muted-foreground lg:hidden hover:text-foreground"
+        >
+          <X className="h-4 w-4" />
+        </button>
       </div>
 
       <div className="px-2 pb-2">
@@ -57,7 +73,7 @@ export function Sidebar() {
         >
           <Search className="h-3.5 w-3.5" />
           <span className="flex-1 text-left">Cerca...</span>
-          <kbd className="rounded border border-border px-1 py-0.5 text-2xs">⌘K</kbd>
+          <kbd className="hidden rounded border border-border px-1 py-0.5 text-2xs sm:block">⌘K</kbd>
         </button>
       </div>
 
@@ -128,6 +144,58 @@ export function Sidebar() {
           </button>
         </div>
       </div>
-    </aside>
+    </>
+  )
+
+  return (
+    <>
+      {/* Desktop sidebar */}
+      <aside className="hidden h-screen w-[220px] flex-shrink-0 flex-col border-r border-border bg-card lg:flex">
+        {sidebarContent}
+      </aside>
+
+      {/* Mobile hamburger */}
+      <div className="fixed left-0 top-0 z-40 flex h-12 w-full items-center gap-2 border-b border-border bg-card px-3 lg:hidden">
+        <button
+          onClick={() => setMobileOpen(true)}
+          className="rounded-md p-1.5 text-muted-foreground hover:text-foreground"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+        <div className="flex items-center gap-2">
+          <div
+            className="flex h-6 w-6 items-center justify-center rounded-md"
+            style={{ backgroundColor: tenant?.primary_color ?? '#3B82F6' }}
+          >
+            <Zap className="h-3 w-3 text-white" />
+          </div>
+          <span className="text-sm font-semibold">{tenant?.name ?? 'DanCRM'}</span>
+        </div>
+      </div>
+
+      {/* Mobile drawer */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <>
+            <motion.div
+              className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm lg:hidden"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setMobileOpen(false)}
+            />
+            <motion.aside
+              className="fixed inset-y-0 left-0 z-50 flex w-[260px] flex-col bg-card shadow-xl lg:hidden"
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            >
+              {sidebarContent}
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
+    </>
   )
 }

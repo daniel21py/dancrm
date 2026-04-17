@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, Trash2, GripVertical } from 'lucide-react'
+import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
 import type { PipelineStage } from '@/types/database'
@@ -99,7 +100,11 @@ function PipelineStagesSection() {
       const { error } = await supabase.from('pipeline_stages').insert(defaults)
       if (error) throw error
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['pipeline-stages'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pipeline-stages'] })
+      toast.success('Pipeline creata')
+    },
+    onError: () => toast.error('Errore durante il salvataggio'),
   })
 
   const addStage = useMutation({
@@ -115,7 +120,9 @@ function PipelineStagesSection() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['pipeline-stages'] })
       setNewStage({ name: '', color: '#6366F1' })
+      toast.success('Stage aggiunto')
     },
+    onError: () => toast.error('Errore durante il salvataggio'),
   })
 
   const deleteStage = useMutation({
@@ -123,7 +130,11 @@ function PipelineStagesSection() {
       const { error } = await supabase.from('pipeline_stages').delete().eq('id', id)
       if (error) throw error
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['pipeline-stages'] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pipeline-stages'] })
+      toast.success('Stage eliminato')
+    },
+    onError: () => toast.error('Errore durante l\'eliminazione'),
   })
 
   return (

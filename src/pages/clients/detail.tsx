@@ -5,6 +5,7 @@ import {
   ArrowLeft, Building2, Globe, Mail, Phone, MapPin,
   Pencil, Trash2, Plus,
 } from 'lucide-react'
+import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 import type { Company, CompanyStatus, CompanyType, Contact, Deal, Activity, PipelineStage } from '@/types/database'
 import { formatCurrency, formatDateRelative, cn } from '@/lib/utils'
@@ -95,7 +96,9 @@ export function ClientDetailPage() {
       queryClient.invalidateQueries({ queryKey: ['company', id] })
       queryClient.invalidateQueries({ queryKey: ['companies'] })
       setIsEditing(false)
+      toast.success('Cliente aggiornato')
     },
+    onError: () => toast.error('Errore durante il salvataggio'),
   })
 
   const deleteCompany = useMutation({
@@ -106,7 +109,9 @@ export function ClientDetailPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['companies'] })
       navigate({ to: '/clients' })
+      toast.success('Cliente eliminato')
     },
+    onError: () => toast.error('Errore durante l\'eliminazione'),
   })
 
   if (isLoading || !company) return <Spinner />
