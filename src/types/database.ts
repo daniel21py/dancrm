@@ -37,8 +37,25 @@ export interface TenantMember {
   role: MemberRole
   full_name: string | null
   avatar_url: string | null
+  phone: string | null
+  monthly_target: number | null
+  commission_pct: number | null
+  assigned_area: string | null
   invited_at: string
   joined_at: string | null
+  created_at: string
+}
+
+export interface Invitation {
+  id: string
+  tenant_id: string
+  code: string
+  role: MemberRole
+  email: string | null
+  used_by: string | null
+  used_at: string | null
+  expires_at: string
+  created_by: string | null
   created_at: string
 }
 

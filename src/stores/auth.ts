@@ -13,6 +13,7 @@ interface AuthState {
   initialize: () => Promise<void>
   refreshTenant: () => Promise<void>
   signIn: (email: string, password: string) => Promise<{ error: string | null }>
+  joinTenant: (inviteCode: string, fullName: string) => Promise<{ error: string | null }>
   signOut: () => Promise<void>
 }
 
@@ -59,6 +60,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signIn: async (email, password) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) return { error: error.message }
+    return { error: null }
+  },
+
+  joinTenant: async (inviteCode, fullName) => {
+    const { error } = await supabase.rpc('join_tenant_with_invite', {
+      p_invite_code: inviteCode,
+      p_full_name: fullName,
+    })
+    if (error) return { error: error.message }
+    const { data: { session } } = await supabase.auth.getSession()
+    if (session) await loadTenantData(session, set)
     return { error: null }
   },
 

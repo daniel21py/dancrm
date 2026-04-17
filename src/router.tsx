@@ -1,6 +1,7 @@
 import { createRouter, createRoute, createRootRoute, redirect } from '@tanstack/react-router'
 import { AppLayout } from '@/components/layout/app-layout'
 import { LoginPage } from '@/pages/login'
+import { RegisterPage } from '@/pages/register'
 import { DashboardPage } from '@/pages/dashboard'
 import { ClientsPage } from '@/pages/clients/index'
 import { ClientDetailPage } from '@/pages/clients/detail'
@@ -18,6 +19,16 @@ const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/login',
   component: LoginPage,
+  beforeLoad: () => {
+    const { session } = useAuthStore.getState()
+    if (session) throw redirect({ to: '/dashboard' })
+  },
+})
+
+const registerRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/register',
+  component: RegisterPage,
   beforeLoad: () => {
     const { session } = useAuthStore.getState()
     if (session) throw redirect({ to: '/dashboard' })
@@ -99,6 +110,7 @@ const indexRoute = createRoute({
 const routeTree = rootRoute.addChildren([
   indexRoute,
   loginRoute,
+  registerRoute,
   layoutRoute.addChildren([
     dashboardRoute,
     clientsRoute,

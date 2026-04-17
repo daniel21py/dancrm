@@ -1,19 +1,24 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, Trash2, GripVertical, Sun, Moon, Database, Pencil, Check, X } from 'lucide-react'
+import {
+  Plus, Trash2, GripVertical, Sun, Moon, Database, Pencil, Check, X,
+  Copy, Users, UserPlus, Mail, Phone, MapPin, Target, Percent,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
 import { useThemeStore } from '@/stores/theme'
 import { seedDemoData } from '@/lib/seed-data'
-import type { PipelineStage, Tenant } from '@/types/database'
+import type { PipelineStage, Tenant, TenantMember, Invitation, MemberRole } from '@/types/database'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Avatar } from '@/components/ui/avatar'
+import { Dialog, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import { Select } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
 
 export function SettingsPage() {
@@ -45,6 +50,7 @@ export function SettingsPage() {
           </CardContent>
         </Card>
 
+        <TeamSection />
         <AppearanceSection />
         <PipelineStagesSection />
         <DemoDataSection />
@@ -251,6 +257,523 @@ function DemoDataSection() {
         )}
       </CardContent>
     </Card>
+  )
+}
+
+// ─── helpers ─────────────────────────────────────────────────────────────────
+
+const ROLE_LABELS: Record<MemberRole, string> = {
+  owner: 'Owner',
+  admin: 'Admin',
+  manager: 'Manager',
+  sales: 'Sales',
+  viewer: 'Viewer',
+}
+
+const ROLE_VARIANTS: Record<MemberRole, 'default' | 'secondary' | 'outline' | 'destructive' | 'success'> = {
+  owner: 'destructive',
+  admin: 'default',
+  manager: 'secondary',
+  sales: 'outline',
+  viewer: 'secondary',
+}
+
+function generateCode(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+  return Array.from({ length: 8 }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
+}
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' })
+}
+
+// ─── TeamSection ──────────────────────────────────────────────────────────────
+
+function TeamSection() {
+  const { member: currentMember, tenant } = useAuthStore()
+  const queryClient = useQueryClient()
+  const isAdmin = currentMember?.role === 'owner' || currentMember?.role === 'admin'
+  const isOwner = currentMember?.role === 'owner'
+
+  const [showInviteDialog, setShowInviteDialog] = useState(false)
+  const [editingMember, setEditingMember] = useState<TenantMember | null>(null)
+
+  const { data: members = [] } = useQuery({
+    queryKey: ['team-members', tenant?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('tenant_members')
+        .select('*')
+        .eq('tenant_id', tenant!.id)
+        .order('created_at')
+      if (error) throw error
+      return data as TenantMember[]
+    },
+    enabled: !!tenant,
+  })
+
+  const removeMember = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('tenant_members').delete().eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['team-members'] })
+      toast.success('Membro rimosso')
+    },
+    onError: () => toast.error('Errore durante la rimozione'),
+  })
+
+  return (
+    <>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Team
+              </CardTitle>
+              <CardDescription>Gestisci i membri del tuo workspace</CardDescription>
+            </div>
+            {isAdmin && (
+              <Button size="sm" onClick={() => setShowInviteDialog(true)}>
+                <UserPlus className="h-3.5 w-3.5" />
+                Invita
+              </Button>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          {members.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nessun membro nel team.</p>
+          ) : (
+            <div className="space-y-2">
+              {members.map((m) => (
+                <div
+                  key={m.id}
+                  className="flex items-center gap-3 rounded-lg border border-border bg-background px-3 py-2.5"
+                >
+                  <Avatar name={m.full_name ?? 'U'} size="sm" />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium truncate">{m.full_name ?? '—'}</span>
+                      <Badge variant={ROLE_VARIANTS[m.role]} className="shrink-0 text-2xs">
+                        {ROLE_LABELS[m.role]}
+                      </Badge>
+                    </div>
+                    <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+                      {m.phone && (
+                        <span className="flex items-center gap-1">
+                          <Phone className="h-3 w-3" />
+                          {m.phone}
+                        </span>
+                      )}
+                      {m.assigned_area && (
+                        <span className="flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />
+                          {m.assigned_area}
+                        </span>
+                      )}
+                      {m.monthly_target != null && (
+                        <span className="flex items-center gap-1">
+                          <Target className="h-3 w-3" />
+                          {m.monthly_target.toLocaleString('it-IT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })}
+                          /mese
+                        </span>
+                      )}
+                      {m.commission_pct != null && (
+                        <span className="flex items-center gap-1">
+                          <Percent className="h-3 w-3" />
+                          {m.commission_pct}%
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  {isAdmin && m.id !== currentMember?.id && (
+                    <div className="flex shrink-0 gap-1">
+                      <button
+                        onClick={() => setEditingMember(m)}
+                        className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      {isOwner && m.role !== 'owner' && (
+                        <button
+                          onClick={() => {
+                            if (confirm(`Rimuovere ${m.full_name ?? 'questo membro'}?`)) {
+                              removeMember.mutate(m.id)
+                            }
+                          }}
+                          className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {isAdmin && (
+        <>
+          <InviteDialog
+            open={showInviteDialog}
+            onClose={() => setShowInviteDialog(false)}
+            tenantId={tenant?.id ?? ''}
+            currentMemberId={currentMember?.id ?? ''}
+          />
+          {editingMember && (
+            <EditMemberDialog
+              member={editingMember}
+              onClose={() => setEditingMember(null)}
+            />
+          )}
+        </>
+      )}
+    </>
+  )
+}
+
+// ─── InviteDialog ─────────────────────────────────────────────────────────────
+
+function InviteDialog({
+  open,
+  onClose,
+  tenantId,
+  currentMemberId,
+}: {
+  open: boolean
+  onClose: () => void
+  tenantId: string
+  currentMemberId: string
+}) {
+  const queryClient = useQueryClient()
+  const [role, setRole] = useState<MemberRole>('sales')
+  const [email, setEmail] = useState('')
+  const [generatedCode, setGeneratedCode] = useState<string | null>(null)
+
+  const { data: activeInvitations = [] } = useQuery({
+    queryKey: ['invitations', tenantId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('invitations')
+        .select('*')
+        .eq('tenant_id', tenantId)
+        .is('used_at', null)
+        .gt('expires_at', new Date().toISOString())
+        .order('created_at', { ascending: false })
+      if (error) throw error
+      return data as Invitation[]
+    },
+    enabled: open && !!tenantId,
+  })
+
+  const createInvite = useMutation({
+    mutationFn: async () => {
+      const code = generateCode()
+      const { error } = await supabase.from('invitations').insert({
+        tenant_id: tenantId,
+        code,
+        role,
+        email: email.trim() || null,
+        created_by: currentMemberId,
+      })
+      if (error) throw error
+      return code
+    },
+    onSuccess: (code) => {
+      setGeneratedCode(code)
+      queryClient.invalidateQueries({ queryKey: ['invitations', tenantId] })
+    },
+    onError: () => toast.error('Errore durante la creazione del codice'),
+  })
+
+  const revokeInvite = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('invitations').delete().eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['invitations', tenantId] })
+      toast.success('Invito revocato')
+    },
+    onError: () => toast.error('Errore durante la revoca'),
+  })
+
+  const handleClose = () => {
+    setGeneratedCode(null)
+    setEmail('')
+    setRole('sales')
+    onClose()
+  }
+
+  const copyCode = (code: string) => {
+    navigator.clipboard.writeText(code)
+    toast.success('Codice copiato!')
+  }
+
+  return (
+    <Dialog open={open} onClose={handleClose} className="max-w-md">
+      <DialogHeader>
+        <DialogTitle>Invita un membro</DialogTitle>
+        <DialogDescription>
+          Genera un codice invito da condividere con il tuo commerciale.
+        </DialogDescription>
+      </DialogHeader>
+
+      {generatedCode ? (
+        <div className="space-y-4">
+          <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 text-center">
+            <p className="mb-2 text-xs text-muted-foreground">Codice invito (valido 7 giorni)</p>
+            <p className="font-mono text-3xl font-bold tracking-widest text-primary">
+              {generatedCode}
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-3"
+              onClick={() => copyCode(generatedCode)}
+            >
+              <Copy className="h-3.5 w-3.5" />
+              Copia codice
+            </Button>
+          </div>
+          <p className="text-center text-xs text-muted-foreground">
+            Il commerciale dovrà andare su{' '}
+            <span className="font-medium text-foreground">/register</span> e inserire questo codice.
+          </p>
+          <Button className="w-full" onClick={() => setGeneratedCode(null)}>
+            Genera un altro codice
+          </Button>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <div className="space-y-1.5">
+            <Label>Ruolo</Label>
+            <Select
+              value={role}
+              onChange={(e) => setRole(e.target.value as MemberRole)}
+            >
+              <option value="sales">Sales — Commerciale</option>
+              <option value="manager">Manager</option>
+              <option value="viewer">Viewer — Solo lettura</option>
+            </Select>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>
+              Email (opzionale)
+              <span className="ml-1 text-muted-foreground">— limita il codice a questa email</span>
+            </Label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="email"
+                value={email}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
+                placeholder="mario@esempio.com"
+                className="pl-9"
+              />
+            </div>
+          </div>
+
+          <Button
+            className="w-full"
+            onClick={() => createInvite.mutate()}
+            disabled={createInvite.isPending}
+          >
+            {createInvite.isPending ? 'Generazione...' : 'Genera codice'}
+          </Button>
+        </div>
+      )}
+
+      {activeInvitations.length > 0 && (
+        <div className="mt-6 border-t border-border pt-4">
+          <p className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            Inviti attivi
+          </p>
+          <div className="space-y-2">
+            {activeInvitations.map((inv) => (
+              <div
+                key={inv.id}
+                className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2"
+              >
+                <span className="font-mono text-sm font-semibold tracking-widest text-primary flex-1">
+                  {inv.code}
+                </span>
+                <Badge variant={ROLE_VARIANTS[inv.role]} className="text-2xs shrink-0">
+                  {ROLE_LABELS[inv.role]}
+                </Badge>
+                {inv.email && (
+                  <span className="text-xs text-muted-foreground truncate max-w-[120px]">
+                    {inv.email}
+                  </span>
+                )}
+                <span className="text-xs text-muted-foreground shrink-0">
+                  scade {formatDate(inv.expires_at)}
+                </span>
+                <button
+                  onClick={() => revokeInvite.mutate(inv.id)}
+                  className="shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </Dialog>
+  )
+}
+
+// ─── EditMemberDialog ─────────────────────────────────────────────────────────
+
+function EditMemberDialog({
+  member,
+  onClose,
+}: {
+  member: TenantMember
+  onClose: () => void
+}) {
+  const queryClient = useQueryClient()
+  const [form, setForm] = useState({
+    role: member.role,
+    phone: member.phone ?? '',
+    monthly_target: member.monthly_target?.toString() ?? '',
+    commission_pct: member.commission_pct?.toString() ?? '',
+    assigned_area: member.assigned_area ?? '',
+  })
+
+  const save = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from('tenant_members')
+        .update({
+          role: form.role,
+          phone: form.phone || null,
+          monthly_target: form.monthly_target ? parseFloat(form.monthly_target) : null,
+          commission_pct: form.commission_pct ? parseFloat(form.commission_pct) : null,
+          assigned_area: form.assigned_area || null,
+        })
+        .eq('id', member.id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['team-members'] })
+      toast.success('Membro aggiornato')
+      onClose()
+    },
+    onError: () => toast.error('Errore durante il salvataggio'),
+  })
+
+  return (
+    <Dialog open onClose={onClose}>
+      <DialogHeader>
+        <DialogTitle>Modifica membro</DialogTitle>
+        <DialogDescription>{member.full_name ?? 'Membro'}</DialogDescription>
+      </DialogHeader>
+
+      <div className="space-y-4">
+        <div className="space-y-1.5">
+          <Label>Ruolo</Label>
+          <Select
+            value={form.role}
+            onChange={(e) => setForm((f) => ({ ...f, role: e.target.value as MemberRole }))}
+            disabled={member.role === 'owner'}
+          >
+            <option value="admin">Admin</option>
+            <option value="manager">Manager</option>
+            <option value="sales">Sales</option>
+            <option value="viewer">Viewer</option>
+          </Select>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label>Telefono</Label>
+          <div className="relative">
+            <Phone className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={form.phone}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setForm((f) => ({ ...f, phone: e.target.value }))
+              }
+              placeholder="+39 333 1234567"
+              className="pl-9"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1.5">
+            <Label>Obiettivo mensile (€)</Label>
+            <div className="relative">
+              <Target className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="number"
+                min="0"
+                step="500"
+                value={form.monthly_target}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setForm((f) => ({ ...f, monthly_target: e.target.value }))
+                }
+                placeholder="10000"
+                className="pl-9"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>Commissione (%)</Label>
+            <div className="relative">
+              <Percent className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="number"
+                min="0"
+                max="100"
+                step="0.5"
+                value={form.commission_pct}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setForm((f) => ({ ...f, commission_pct: e.target.value }))
+                }
+                placeholder="5"
+                className="pl-9"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label>Area assegnata</Label>
+          <div className="relative">
+            <MapPin className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={form.assigned_area}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setForm((f) => ({ ...f, assigned_area: e.target.value }))
+              }
+              placeholder="es. Lombardia, Nord Italia"
+              className="pl-9"
+            />
+          </div>
+        </div>
+
+        <div className="flex gap-2 pt-2">
+          <Button variant="outline" onClick={onClose} className="flex-1">
+            Annulla
+          </Button>
+          <Button onClick={() => save.mutate()} disabled={save.isPending} className="flex-1">
+            <Check className="h-4 w-4" />
+            {save.isPending ? 'Salvataggio...' : 'Salva'}
+          </Button>
+        </div>
+      </div>
+    </Dialog>
   )
 }
 

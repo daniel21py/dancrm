@@ -97,7 +97,12 @@ export function LoginPage() {
           </Button>
         </form>
 
-        <p className="mt-6 text-center text-2xs text-muted-foreground">
+        <p className="mt-6 text-center text-sm">
+          <a href="/register" className="text-primary hover:underline">
+            Hai un codice invito? Registrati →
+          </a>
+        </p>
+        <p className="mt-4 text-center text-2xs text-muted-foreground">
           N Quadro Srl &middot; SDQ Q-Rier
         </p>
       </motion.div>
