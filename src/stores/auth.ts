@@ -11,6 +11,7 @@ interface AuthState {
   loading: boolean
   initialized: boolean
   initialize: () => Promise<void>
+  refreshTenant: () => Promise<void>
   signIn: (email: string, password: string) => Promise<{ error: string | null }>
   signOut: () => Promise<void>
 }
@@ -42,6 +43,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
       set({ session, user: session?.user ?? null })
     })
+  },
+
+  refreshTenant: async () => {
+    const { member } = get()
+    if (!member) return
+    const { data: tenant } = await supabase
+      .from('tenants')
+      .select('*')
+      .eq('id', member.tenant_id)
+      .single()
+    if (tenant) set({ tenant: tenant as Tenant })
   },
 
   signIn: async (email, password) => {
