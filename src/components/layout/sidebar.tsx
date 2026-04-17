@@ -1,4 +1,5 @@
 import { Link, useRouterState } from '@tanstack/react-router'
+import { motion } from 'framer-motion'
 import {
   LayoutDashboard,
   Building2,
@@ -7,9 +8,11 @@ import {
   CheckSquare,
   Settings,
   LogOut,
+  Zap,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/stores/auth'
+import { Avatar } from '@/components/ui/avatar'
 
 const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -17,6 +20,9 @@ const navItems = [
   { to: '/contacts', label: 'Contatti', icon: Users },
   { to: '/deals', label: 'Pipeline', icon: Kanban },
   { to: '/tasks', label: 'Attivita', icon: CheckSquare },
+] as const
+
+const bottomItems = [
   { to: '/settings', label: 'Impostazioni', icon: Settings },
 ] as const
 
@@ -26,27 +32,20 @@ export function Sidebar() {
   const currentPath = routerState.location.pathname
 
   return (
-    <aside className="flex h-screen w-64 flex-col border-r bg-white">
-      {/* Logo */}
-      <div className="flex items-center gap-3 border-b px-5 py-4">
+    <aside className="flex h-screen w-[240px] flex-col border-r border-border bg-card">
+      <div className="flex items-center gap-2.5 px-4 py-4">
         <div
-          className="flex h-9 w-9 items-center justify-center rounded-lg"
+          className="flex h-7 w-7 items-center justify-center rounded-lg"
           style={{ backgroundColor: tenant?.primary_color ?? '#3B82F6' }}
         >
-          <span className="text-sm font-bold text-white">DC</span>
+          <Zap className="h-3.5 w-3.5 text-white" />
         </div>
-        <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-slate-900">
-            {tenant?.name ?? 'DanCRM'}
-          </p>
-          <p className="truncate text-xs text-slate-500">
-            {member?.role ?? ''}
-          </p>
-        </div>
+        <span className="text-sm font-semibold tracking-tight">
+          {tenant?.name ?? 'DanCRM'}
+        </span>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 space-y-1 px-3 py-4">
+      <nav className="flex-1 space-y-0.5 px-2 py-2">
         {navItems.map(({ to, label, icon: Icon }) => {
           const isActive = currentPath === to || currentPath.startsWith(to + '/')
           return (
@@ -54,28 +53,63 @@ export function Sidebar() {
               key={to}
               to={to}
               className={cn(
-                'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                'group relative flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] font-medium transition-colors',
                 isActive
-                  ? 'bg-primary/10 text-primary'
-                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                  ? 'text-foreground'
+                  : 'text-muted-foreground hover:text-foreground'
               )}
             >
-              <Icon className="h-4 w-4 flex-shrink-0" />
-              {label}
+              {isActive && (
+                <motion.div
+                  layoutId="sidebar-active"
+                  className="absolute inset-0 rounded-lg bg-accent"
+                  transition={{ type: 'spring', duration: 0.3, bounce: 0.15 }}
+                />
+              )}
+              <Icon className="relative z-10 h-4 w-4" />
+              <span className="relative z-10">{label}</span>
             </Link>
           )
         })}
       </nav>
 
-      {/* User footer */}
-      <div className="border-t px-3 py-3">
-        <button
-          onClick={signOut}
-          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700"
-        >
-          <LogOut className="h-4 w-4" />
-          Esci
-        </button>
+      <div className="space-y-0.5 border-t border-border px-2 py-2">
+        {bottomItems.map(({ to, label, icon: Icon }) => {
+          const isActive = currentPath === to
+          return (
+            <Link
+              key={to}
+              to={to}
+              className={cn(
+                'flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] font-medium transition-colors',
+                isActive
+                  ? 'bg-accent text-foreground'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              <Icon className="h-4 w-4" />
+              {label}
+            </Link>
+          )
+        })}
+      </div>
+
+      <div className="border-t border-border px-2 py-2">
+        <div className="flex items-center justify-between rounded-lg px-2.5 py-1.5">
+          <div className="flex items-center gap-2.5">
+            <Avatar name={member?.full_name ?? 'U'} size="sm" />
+            <div className="min-w-0">
+              <p className="truncate text-xs font-medium">{member?.full_name ?? 'Utente'}</p>
+              <p className="truncate text-2xs text-muted-foreground">{member?.role}</p>
+            </div>
+          </div>
+          <button
+            onClick={signOut}
+            className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+          >
+            <LogOut className="h-3.5 w-3.5" />
+          </button>
+        </div>
       </div>
     </aside>
   )

@@ -1,7 +1,6 @@
 import type { Config } from 'tailwindcss'
 
 export default {
-  darkMode: ['class'],
   content: [
     './index.html',
     './src/**/*.{ts,tsx}',
@@ -38,6 +37,12 @@ export default {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
+        popover: {
+          DEFAULT: 'hsl(var(--popover))',
+          foreground: 'hsl(var(--popover-foreground))',
+        },
+        success: 'hsl(var(--success))',
+        warning: 'hsl(var(--warning))',
       },
       borderRadius: {
         lg: 'var(--radius)',
@@ -45,7 +50,24 @@ export default {
         sm: 'calc(var(--radius) - 4px)',
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+      },
+      fontSize: {
+        '2xs': ['0.625rem', { lineHeight: '0.875rem' }],
+      },
+      keyframes: {
+        'fade-in': {
+          from: { opacity: '0' },
+          to: { opacity: '1' },
+        },
+        'slide-up': {
+          from: { opacity: '0', transform: 'translateY(4px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+      },
+      animation: {
+        'fade-in': 'fade-in 0.2s ease-out',
+        'slide-up': 'slide-up 0.2s ease-out',
       },
     },
   },

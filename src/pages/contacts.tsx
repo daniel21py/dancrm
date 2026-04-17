@@ -1,16 +1,30 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { motion } from 'framer-motion'
 import { Plus, Search, Users, Phone, Mail, Building2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import type { Contact, ContactRole, Company } from '@/types/database'
-import { cn, formatDateRelative, getInitials } from '@/lib/utils'
+import { formatDateRelative } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Select } from '@/components/ui/select'
+import { Badge } from '@/components/ui/badge'
+import { Avatar } from '@/components/ui/avatar'
+import { Spinner } from '@/components/ui/spinner'
+import { EmptyState } from '@/components/ui/empty-state'
+import { Dialog, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Label } from '@/components/ui/label'
+import { Card } from '@/components/ui/card'
 
-const roleLabels: Record<ContactRole, { label: string; className: string }> = {
-  decisore: { label: 'Decisore', className: 'bg-violet-100 text-violet-700' },
-  operativo: { label: 'Operativo', className: 'bg-blue-100 text-blue-700' },
-  referente: { label: 'Referente', className: 'bg-emerald-100 text-emerald-700' },
-  altro: { label: 'Altro', className: 'bg-slate-100 text-slate-700' },
+const roleConfig: Record<ContactRole, { label: string; variant: 'default' | 'secondary' | 'success' | 'warning' }> = {
+  decisore: { label: 'Decisore', variant: 'default' },
+  operativo: { label: 'Operativo', variant: 'secondary' },
+  referente: { label: 'Referente', variant: 'success' },
+  altro: { label: 'Altro', variant: 'secondary' },
 }
+
+const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.03 } } }
+const item = { hidden: { opacity: 0, y: 6 }, show: { opacity: 1, y: 0 } }
 
 export function ContactsPage() {
   const queryClient = useQueryClient()
@@ -24,11 +38,9 @@ export function ContactsPage() {
         .from('contacts')
         .select('*, company:companies(id, name)')
         .order('created_at', { ascending: false })
-
       if (search) {
         query = query.or(`first_name.ilike.%${search}%,last_name.ilike.%${search}%,email.ilike.%${search}%`)
       }
-
       const { data, error } = await query.limit(100)
       if (error) throw error
       return data as (Contact & { company: Pick<Company, 'id' | 'name'> | null })[]
@@ -60,219 +72,164 @@ export function ContactsPage() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Contatti</h1>
-          <p className="text-sm text-slate-500">{contacts.length} contatti</p>
+          <h1 className="text-xl font-semibold tracking-tight">Contatti</h1>
+          <p className="text-sm text-muted-foreground">{contacts.length} contatti</p>
         </div>
-        <button
-          onClick={() => setShowForm(true)}
-          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary/90"
-        >
+        <Button onClick={() => setShowForm(true)}>
           <Plus className="h-4 w-4" />
           Nuovo contatto
-        </button>
+        </Button>
       </div>
 
-      {/* Search */}
       <div className="relative mb-4">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-        <input
-          type="text"
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Cerca per nome, email..."
-          className="w-full rounded-lg border border-slate-200 py-2 pl-10 pr-4 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          className="pl-9"
         />
       </div>
 
-      {/* Grid */}
       {isLoading ? (
-        <div className="flex items-center justify-center py-20">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-        </div>
+        <Spinner />
       ) : contacts.length === 0 ? (
-        <div className="rounded-xl border bg-white p-12 text-center">
-          <Users className="mx-auto mb-4 h-12 w-12 text-slate-300" />
-          <h3 className="mb-1 text-lg font-semibold text-slate-900">Nessun contatto</h3>
-          <p className="text-sm text-slate-500">Aggiungi il tuo primo contatto.</p>
-        </div>
+        <EmptyState
+          icon={Users}
+          title="Nessun contatto"
+          description="Aggiungi il tuo primo contatto per iniziare."
+          action={{ label: 'Nuovo contatto', onClick: () => setShowForm(true) }}
+        />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <motion.div
+          className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
+          variants={container}
+          initial="hidden"
+          animate="show"
+        >
           {contacts.map((contact) => (
-            <div key={contact.id} className="rounded-xl border bg-white p-4 transition-shadow hover:shadow-md">
-              <div className="mb-3 flex items-start gap-3">
-                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
-                  {getInitials(`${contact.first_name} ${contact.last_name}`)}
+            <motion.div key={contact.id} variants={item}>
+              <Card className="group cursor-pointer p-4 transition-colors hover:border-muted-foreground/25">
+                <div className="mb-3 flex items-start gap-3">
+                  <Avatar name={`${contact.first_name} ${contact.last_name}`} />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">
+                      {contact.first_name} {contact.last_name}
+                    </p>
+                    {contact.job_title && (
+                      <p className="truncate text-xs text-muted-foreground">{contact.job_title}</p>
+                    )}
+                  </div>
+                  <Badge variant={roleConfig[contact.role].variant}>
+                    {roleConfig[contact.role].label}
+                  </Badge>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium text-slate-900">
-                    {contact.first_name} {contact.last_name}
-                  </p>
-                  {contact.job_title && (
-                    <p className="truncate text-xs text-slate-500">{contact.job_title}</p>
+
+                <div className="space-y-1 text-xs text-muted-foreground">
+                  {contact.company && (
+                    <p className="flex items-center gap-1.5">
+                      <Building2 className="h-3 w-3 flex-shrink-0" />
+                      <span className="truncate">{contact.company.name}</span>
+                    </p>
+                  )}
+                  {contact.email && (
+                    <p className="flex items-center gap-1.5">
+                      <Mail className="h-3 w-3 flex-shrink-0" />
+                      <span className="truncate">{contact.email}</span>
+                    </p>
+                  )}
+                  {(contact.mobile ?? contact.phone) && (
+                    <p className="flex items-center gap-1.5">
+                      <Phone className="h-3 w-3 flex-shrink-0" />
+                      {contact.mobile ?? contact.phone}
+                    </p>
                   )}
                 </div>
-                <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium', roleLabels[contact.role].className)}>
-                  {roleLabels[contact.role].label}
-                </span>
-              </div>
 
-              <div className="space-y-1.5 text-xs text-slate-500">
-                {contact.company && (
-                  <p className="flex items-center gap-1.5">
-                    <Building2 className="h-3 w-3" />
-                    {contact.company.name}
-                  </p>
-                )}
-                {contact.email && (
-                  <p className="flex items-center gap-1.5">
-                    <Mail className="h-3 w-3" />
-                    {contact.email}
-                  </p>
-                )}
-                {(contact.phone || contact.mobile) && (
-                  <p className="flex items-center gap-1.5">
-                    <Phone className="h-3 w-3" />
-                    {contact.mobile ?? contact.phone}
-                  </p>
-                )}
-              </div>
-
-              <p className="mt-3 text-right text-xs text-slate-400">
-                {formatDateRelative(contact.created_at)}
-              </p>
-            </div>
+                <p className="mt-3 text-right text-2xs text-muted-foreground">
+                  {formatDateRelative(contact.created_at)}
+                </p>
+              </Card>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       )}
 
-      {/* Create modal */}
-      {showForm && (
-        <CreateContactModal
+      <Dialog open={showForm} onClose={() => setShowForm(false)}>
+        <DialogHeader>
+          <DialogTitle>Nuovo contatto</DialogTitle>
+        </DialogHeader>
+        <CreateContactForm
           companies={companies}
-          onClose={() => setShowForm(false)}
           onSubmit={(data) => createContact.mutate(data)}
           isLoading={createContact.isPending}
         />
-      )}
+      </Dialog>
     </div>
   )
 }
 
-function CreateContactModal({
+function CreateContactForm({
   companies,
-  onClose,
   onSubmit,
   isLoading,
 }: {
   companies: Pick<Company, 'id' | 'name'>[]
-  onClose: () => void
   onSubmit: (data: Partial<Contact>) => void
   isLoading: boolean
 }) {
   const [form, setForm] = useState({
-    first_name: '',
-    last_name: '',
-    role: 'referente' as ContactRole,
-    job_title: '',
-    email: '',
-    phone: '',
-    mobile: '',
-    company_id: '',
+    first_name: '', last_name: '', role: 'referente' as ContactRole,
+    job_title: '', email: '', phone: '', mobile: '', company_id: '',
   })
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    onSubmit({
-      ...form,
-      company_id: form.company_id || null,
-    })
+    onSubmit({ ...form, company_id: form.company_id || null })
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
-        <h2 className="mb-4 text-lg font-bold text-slate-900">Nuovo contatto</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Nome *</label>
-              <input
-                value={form.first_name}
-                onChange={(e) => setForm(f => ({ ...f, first_name: e.target.value }))}
-                required
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Cognome *</label>
-              <input
-                value={form.last_name}
-                onChange={(e) => setForm(f => ({ ...f, last_name: e.target.value }))}
-                required
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Ruolo</label>
-              <select
-                value={form.role}
-                onChange={(e) => setForm(f => ({ ...f, role: e.target.value as ContactRole }))}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-              >
-                {Object.entries(roleLabels).map(([key, { label }]) => (
-                  <option key={key} value={key}>{label}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Titolo</label>
-              <input
-                value={form.job_title}
-                onChange={(e) => setForm(f => ({ ...f, job_title: e.target.value }))}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Email</label>
-              <input
-                type="email"
-                value={form.email}
-                onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-slate-700">Cellulare</label>
-              <input
-                value={form.mobile}
-                onChange={(e) => setForm(f => ({ ...f, mobile: e.target.value }))}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-              />
-            </div>
-            <div className="sm:col-span-2">
-              <label className="mb-1 block text-sm font-medium text-slate-700">Azienda</label>
-              <select
-                value={form.company_id}
-                onChange={(e) => setForm(f => ({ ...f, company_id: e.target.value }))}
-                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-              >
-                <option value="">Nessuna azienda</option>
-                {companies.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <div className="flex justify-end gap-3">
-            <button type="button" onClick={onClose} className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
-              Annulla
-            </button>
-            <button type="submit" disabled={isLoading} className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 disabled:opacity-50">
-              {isLoading ? 'Salvataggio...' : 'Crea contatto'}
-            </button>
-          </div>
-        </form>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="space-y-1.5">
+          <Label>Nome</Label>
+          <Input value={form.first_name} onChange={(e) => setForm(f => ({ ...f, first_name: e.target.value }))} required autoFocus />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Cognome</Label>
+          <Input value={form.last_name} onChange={(e) => setForm(f => ({ ...f, last_name: e.target.value }))} required />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Ruolo</Label>
+          <Select value={form.role} onChange={(e) => setForm(f => ({ ...f, role: e.target.value as ContactRole }))}>
+            {Object.entries(roleConfig).map(([k, { label }]) => <option key={k} value={k}>{label}</option>)}
+          </Select>
+        </div>
+        <div className="space-y-1.5">
+          <Label>Titolo</Label>
+          <Input value={form.job_title} onChange={(e) => setForm(f => ({ ...f, job_title: e.target.value }))} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Email</Label>
+          <Input type="email" value={form.email} onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Cellulare</Label>
+          <Input value={form.mobile} onChange={(e) => setForm(f => ({ ...f, mobile: e.target.value }))} />
+        </div>
+        <div className="sm:col-span-2 space-y-1.5">
+          <Label>Azienda</Label>
+          <Select value={form.company_id} onChange={(e) => setForm(f => ({ ...f, company_id: e.target.value }))}>
+            <option value="">Nessuna azienda</option>
+            {companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </Select>
+        </div>
       </div>
-    </div>
+      <div className="flex justify-end gap-2 pt-2">
+        <Button type="submit" disabled={isLoading}>
+          {isLoading ? 'Salvataggio...' : 'Crea contatto'}
+        </Button>
+      </div>
+    </form>
   )
 }

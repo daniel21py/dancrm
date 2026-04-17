@@ -1,5 +1,10 @@
 import { useState } from 'react'
+import { motion } from 'framer-motion'
+import { Zap, ArrowRight } from 'lucide-react'
 import { useAuthStore } from '@/stores/auth'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 
 export function LoginPage() {
   const { signIn } = useAuthStore()
@@ -12,65 +17,90 @@ export function LoginPage() {
     e.preventDefault()
     setLoading(true)
     setError('')
-
     const result = await signIn(email, password)
     if (result.error) setError(result.error)
     setLoading(false)
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 to-slate-800">
-      <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl">
-        <div className="mb-8 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
-            <span className="text-sm font-bold text-white">DC</span>
-          </div>
-          <div>
-            <h1 className="text-xl font-semibold text-slate-900">DanCRM</h1>
-            <p className="text-xs text-slate-500">N Quadro Srl / SDQ Q-Rier</p>
-          </div>
-        </div>
+    <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-[40%] left-1/2 h-[600px] w-[600px] -translate-x-1/2 rounded-full bg-primary/5 blur-3xl" />
+      </div>
 
-        <h2 className="mb-1 text-2xl font-bold text-slate-900">Bentornato</h2>
-        <p className="mb-6 text-sm text-slate-500">Accedi al tuo CRM</p>
+      <motion.div
+        className="relative z-10 w-full max-w-sm px-4"
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: 'easeOut' }}
+      >
+        <div className="mb-8 flex flex-col items-center">
+          <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
+            <Zap className="h-5 w-5 text-white" />
+          </div>
+          <h1 className="text-xl font-semibold tracking-tight">Accedi a DanCRM</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Gestisci clienti, deal e pipeline
+          </p>
+        </div>
 
         <form onSubmit={handleLogin} className="space-y-4">
           {error && (
-            <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+            <motion.div
+              className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
               {error}
-            </div>
+            </motion.div>
           )}
-          <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">Email</label>
-            <input
+
+          <div className="space-y-1.5">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
               placeholder="daniel@nquadrosrl.com"
+              autoComplete="email"
+              autoFocus
             />
           </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">Password</label>
-            <input
+
+          <div className="space-y-1.5">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
               placeholder="••••••••"
+              autoComplete="current-password"
             />
           </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-lg bg-primary py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary/90 disabled:opacity-50"
-          >
-            {loading ? 'Accesso...' : 'Accedi'}
-          </button>
+
+          <Button type="submit" disabled={loading} className="w-full">
+            {loading ? (
+              <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              </svg>
+            ) : (
+              <>
+                Accedi
+                <ArrowRight className="h-4 w-4" />
+              </>
+            )}
+          </Button>
         </form>
-      </div>
+
+        <p className="mt-6 text-center text-2xs text-muted-foreground">
+          N Quadro Srl &middot; SDQ Q-Rier
+        </p>
+      </motion.div>
     </div>
   )
 }

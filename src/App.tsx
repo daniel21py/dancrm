@@ -1,5 +1,7 @@
 import { useEffect } from 'react'
 import { RouterProvider } from '@tanstack/react-router'
+import { motion } from 'framer-motion'
+import { Zap } from 'lucide-react'
 import { router } from '@/router'
 import { useAuthStore } from '@/stores/auth'
 
@@ -12,11 +14,25 @@ export default function App() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-3">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-          <p className="text-sm text-muted-foreground">Caricamento DanCRM...</p>
-        </div>
+      <div className="flex min-h-screen items-center justify-center">
+        <motion.div
+          className="flex flex-col items-center gap-3"
+          initial={{ opacity: 0, scale: 0.96 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3 }}
+        >
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
+            <Zap className="h-5 w-5 text-white" />
+          </div>
+          <div className="h-1 w-16 overflow-hidden rounded-full bg-muted">
+            <motion.div
+              className="h-full bg-primary"
+              initial={{ x: '-100%' }}
+              animate={{ x: '100%' }}
+              transition={{ repeat: Infinity, duration: 0.8, ease: 'easeInOut' }}
+            />
+          </div>
+        </motion.div>
       </div>
     )
   }
