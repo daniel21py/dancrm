@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useNavigate } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
 import { Plus, Search, Building2, Phone, Mail, MapPin } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -32,6 +33,7 @@ const typeLabels: Record<CompanyType, string> = {
 
 export function ClientsPage() {
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<CompanyStatus | ''>('')
   const [showForm, setShowForm] = useState(false)
@@ -135,6 +137,7 @@ export function ClientsPage() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: i * 0.02 }}
+                  onClick={() => navigate({ to: '/clients/$id', params: { id: company.id } })}
                 >
                   <td className="px-4 py-2.5">
                     <div className="flex items-center gap-2.5">

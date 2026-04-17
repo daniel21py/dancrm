@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useNavigate } from '@tanstack/react-router'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   DndContext,
@@ -13,7 +14,7 @@ import {
 } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Plus, Building2, Kanban } from 'lucide-react'
+import { Plus, Building2, Kanban, ExternalLink } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import type { Deal, PipelineStage, Company } from '@/types/database'
 import { formatCurrency } from '@/lib/utils'
@@ -201,6 +202,7 @@ function StageColumn({ stage, deals, totalValue }: { stage: PipelineStage; deals
 }
 
 function DealCard({ deal, isDragOverlay }: { deal: DealWithCompany; isDragOverlay?: boolean }) {
+  const navigate = useNavigate()
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: deal.id })
 
   const style = {
@@ -215,9 +217,22 @@ function DealCard({ deal, isDragOverlay }: { deal: DealWithCompany; isDragOverla
       style={!isDragOverlay ? style : undefined}
       {...(!isDragOverlay ? attributes : {})}
       {...(!isDragOverlay ? listeners : {})}
-      className="cursor-grab rounded-lg border border-border bg-card p-3 transition-all hover:border-muted-foreground/25 active:cursor-grabbing"
+      className="group relative cursor-grab rounded-lg border border-border bg-card p-3 transition-all hover:border-muted-foreground/25 active:cursor-grabbing"
     >
-      <p className="mb-1 text-sm font-medium">{deal.title}</p>
+      {!isDragOverlay && (
+        <button
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation()
+            navigate({ to: '/deals/$id', params: { id: deal.id } })
+          }}
+          className="absolute right-2 top-2 rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-accent hover:text-foreground group-hover:opacity-100"
+          title="Apri dettaglio"
+        >
+          <ExternalLink className="h-3 w-3" />
+        </button>
+      )}
+      <p className="mb-1 pr-5 text-sm font-medium">{deal.title}</p>
       {deal.company && (
         <p className="mb-1.5 flex items-center gap-1 text-2xs text-muted-foreground">
           <Building2 className="h-3 w-3" />
