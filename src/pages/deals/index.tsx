@@ -188,7 +188,10 @@ export function DealsPage() {
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-thin">
+        <div
+          className="grid gap-3 pb-4"
+          style={{ gridTemplateColumns: `repeat(${stages.length}, minmax(0, 1fr))` }}
+        >
           {stages.map((stage) => {
             const stageDeals = deals.filter((d) => d.stage_id === stage.id)
             const stageValue = stageDeals.reduce(
@@ -243,7 +246,7 @@ function StageColumn({
     <div
       ref={setNodeRef}
       className={[
-        'flex w-[288px] flex-shrink-0 flex-col rounded-xl border bg-card/40 backdrop-blur transition-colors',
+        'flex min-w-0 flex-col rounded-xl border bg-card/40 backdrop-blur transition-colors',
         isOver
           ? 'border-primary/50 bg-primary/[0.04]'
           : 'border-border/60',
