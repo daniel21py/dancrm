@@ -73,6 +73,7 @@ function Field({ label, value }: { label: string; value: string | null | undefin
 
 function PipelineStagesSection() {
   const queryClient = useQueryClient()
+  const { member } = useAuthStore()
   const [newStage, setNewStage] = useState({ name: '', color: '#6366F1' })
 
   const { data: stages = [] } = useQuery({
@@ -84,9 +85,27 @@ function PipelineStagesSection() {
     },
   })
 
+  const seedDefaults = useMutation({
+    mutationFn: async () => {
+      const tid = member!.tenant_id
+      const defaults = [
+        { tenant_id: tid, name: 'Primo Contatto', color: '#3B82F6', position: 0, is_won: false, is_lost: false },
+        { tenant_id: tid, name: 'Qualificazione', color: '#8B5CF6', position: 1, is_won: false, is_lost: false },
+        { tenant_id: tid, name: 'Proposta', color: '#F59E0B', position: 2, is_won: false, is_lost: false },
+        { tenant_id: tid, name: 'Negoziazione', color: '#EF4444', position: 3, is_won: false, is_lost: false },
+        { tenant_id: tid, name: 'Chiuso Vinto', color: '#10B981', position: 4, is_won: true, is_lost: false },
+        { tenant_id: tid, name: 'Chiuso Perso', color: '#6B7280', position: 5, is_won: false, is_lost: true },
+      ]
+      const { error } = await supabase.from('pipeline_stages').insert(defaults)
+      if (error) throw error
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['pipeline-stages'] }),
+  })
+
   const addStage = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from('pipeline_stages').insert({
+        tenant_id: member!.tenant_id,
         name: newStage.name,
         color: newStage.color,
         position: stages.length,
@@ -114,6 +133,15 @@ function PipelineStagesSection() {
         <CardDescription>Configura gli stage della pipeline di vendita</CardDescription>
       </CardHeader>
       <CardContent>
+        {stages.length === 0 && (
+          <div className="mb-4 rounded-lg border border-dashed border-border p-4 text-center">
+            <p className="mb-2 text-sm text-muted-foreground">Nessuno stage configurato.</p>
+            <Button onClick={() => seedDefaults.mutate()} disabled={seedDefaults.isPending} variant="outline" size="sm">
+              {seedDefaults.isPending ? 'Creazione...' : 'Usa pipeline predefinita'}
+            </Button>
+          </div>
+        )}
+
         {stages.length > 0 && (
           <div className="mb-4 space-y-1">
             <AnimatePresence>
