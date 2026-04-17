@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Zap, ArrowRight } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/stores/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { SdqLogo } from '@/components/sdq-logo'
 
 export function RegisterPage() {
   const { joinTenant } = useAuthStore()
@@ -61,28 +62,40 @@ export function RegisterPage() {
   )
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-[40%] left-1/2 h-[600px] w-[600px] -translate-x-1/2 rounded-full bg-primary/5 blur-3xl" />
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute left-1/2 top-[-30%] h-[620px] w-[620px] -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
+        <div className="absolute bottom-[-25%] right-[-10%] h-[420px] w-[420px] rounded-full bg-primary/5 blur-3xl" />
       </div>
+
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.04]"
+        style={{
+          backgroundImage:
+            'linear-gradient(rgba(255,255,255,0.6) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.6) 1px, transparent 1px)',
+          backgroundSize: '48px 48px',
+          maskImage:
+            'radial-gradient(ellipse at center, black 0%, transparent 70%)',
+        }}
+      />
 
       <motion.div
         className="relative z-10 w-full max-w-sm px-4"
-        initial={{ opacity: 0, y: 16 }}
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: 'easeOut' }}
+        transition={{ duration: 0.45, ease: 'easeOut' }}
       >
-        <div className="mb-8 flex flex-col items-center">
-          <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
-            <Zap className="h-5 w-5 text-white" />
-          </div>
-          <h1 className="text-xl font-semibold tracking-tight">Crea il tuo account</h1>
+        <div className="mb-10 flex flex-col items-center">
+          <SdqLogo full className="mb-5 h-24 w-24 shadow-lime-glow" />
+          <h1 className="font-display text-2xl font-semibold tracking-tight">
+            Crea il tuo account
+          </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Usa il codice invito che hai ricevuto
           </p>
         </div>
 
-        <form onSubmit={handleRegister} className="space-y-4">
+        <form onSubmit={handleRegister} className="surface-glass space-y-4 rounded-2xl border border-border/60 p-5">
           {error && (
             <motion.div
               className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
@@ -164,8 +177,8 @@ export function RegisterPage() {
             ← Hai già un account? Accedi
           </Link>
         </p>
-        <p className="mt-4 text-center text-2xs text-muted-foreground">
-          N Quadro Srl &middot; SDQ Q-Rier
+        <p className="mt-6 text-center font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+          N Quadro Srl · SDQ Sameday Q-Rier
         </p>
       </motion.div>
     </div>

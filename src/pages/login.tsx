@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Zap, ArrowRight } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { useAuthStore } from '@/stores/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { SdqLogo } from '@/components/sdq-logo'
 
 export function LoginPage() {
   const { signIn } = useAuthStore()
@@ -23,28 +24,43 @@ export function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-[40%] left-1/2 h-[600px] w-[600px] -translate-x-1/2 rounded-full bg-primary/5 blur-3xl" />
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute left-1/2 top-[-30%] h-[620px] w-[620px] -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
+        <div className="absolute bottom-[-25%] right-[-10%] h-[420px] w-[420px] rounded-full bg-primary/5 blur-3xl" />
       </div>
+
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.04]"
+        style={{
+          backgroundImage:
+            'linear-gradient(rgba(255,255,255,0.6) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.6) 1px, transparent 1px)',
+          backgroundSize: '48px 48px',
+          maskImage:
+            'radial-gradient(ellipse at center, black 0%, transparent 70%)',
+        }}
+      />
 
       <motion.div
         className="relative z-10 w-full max-w-sm px-4"
-        initial={{ opacity: 0, y: 16 }}
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: 'easeOut' }}
+        transition={{ duration: 0.45, ease: 'easeOut' }}
       >
-        <div className="mb-8 flex flex-col items-center">
-          <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
-            <Zap className="h-5 w-5 text-white" />
-          </div>
-          <h1 className="text-xl font-semibold tracking-tight">Accedi a DanCRM</h1>
+        <div className="mb-10 flex flex-col items-center">
+          <SdqLogo full className="mb-5 h-24 w-24 shadow-lime-glow" />
+          <h1 className="font-display text-2xl font-semibold tracking-tight">
+            Accedi a <span className="text-primary">DanCRM</span>
+          </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Gestisci clienti, deal e pipeline
+            Clienti · Deal · Pipeline · Spedizioni
           </p>
         </div>
 
-        <form onSubmit={handleLogin} className="space-y-4">
+        <form
+          onSubmit={handleLogin}
+          className="surface-glass space-y-4 rounded-2xl border border-border/60 p-5"
+        >
           {error && (
             <motion.div
               className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
@@ -70,7 +86,15 @@ export function LoginPage() {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="password">Password</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password">Password</Label>
+              <a
+                href="#"
+                className="text-2xs text-muted-foreground transition-colors hover:text-primary"
+              >
+                Dimenticata?
+              </a>
+            </div>
             <Input
               id="password"
               type="password"
@@ -84,9 +108,24 @@ export function LoginPage() {
 
           <Button type="submit" disabled={loading} className="w-full">
             {loading ? (
-              <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              <svg
+                className="h-4 w-4 animate-spin"
+                viewBox="0 0 24 24"
+                fill="none"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                />
               </svg>
             ) : (
               <>
@@ -102,8 +141,8 @@ export function LoginPage() {
             Hai un codice invito? Registrati →
           </a>
         </p>
-        <p className="mt-4 text-center text-2xs text-muted-foreground">
-          N Quadro Srl &middot; SDQ Q-Rier
+        <p className="mt-6 text-center font-mono text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+          N Quadro Srl · SDQ Sameday Q-Rier
         </p>
       </motion.div>
     </div>

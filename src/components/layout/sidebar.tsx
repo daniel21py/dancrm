@@ -9,7 +9,6 @@ import {
   CheckSquare,
   Settings,
   LogOut,
-  Zap,
   Search,
   Menu,
   X,
@@ -17,13 +16,14 @@ import {
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/stores/auth'
 import { Avatar } from '@/components/ui/avatar'
+import { SdqLogo } from '@/components/sdq-logo'
 
 const navItems = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/clients', label: 'Clienti', icon: Building2 },
   { to: '/contacts', label: 'Contatti', icon: Users },
   { to: '/deals', label: 'Pipeline', icon: Kanban },
-  { to: '/tasks', label: 'Attivita', icon: CheckSquare },
+  { to: '/tasks', label: 'Attività', icon: CheckSquare },
 ] as const
 
 const bottomItems = [
@@ -41,22 +41,24 @@ export function Sidebar() {
   }, [currentPath])
 
   const openCommandPalette = () => {
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true, bubbles: true }))
+    document.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'k', metaKey: true, bubbles: true }),
+    )
   }
 
   const sidebarContent = (
     <>
-      <div className="flex items-center justify-between px-4 py-4">
+      <div className="flex items-center justify-between px-4 pt-4 pb-3">
         <div className="flex items-center gap-2.5">
-          <div
-            className="flex h-7 w-7 items-center justify-center rounded-lg"
-            style={{ backgroundColor: tenant?.primary_color ?? '#3B82F6' }}
-          >
-            <Zap className="h-3.5 w-3.5 text-white" />
+          <SdqLogo className="h-8 w-8" />
+          <div className="flex min-w-0 flex-col leading-none">
+            <span className="text-[13px] font-semibold tracking-tight">
+              {tenant?.name ?? 'DanCRM'}
+            </span>
+            <span className="mt-0.5 font-mono text-[9px] uppercase tracking-[0.18em] text-muted-foreground">
+              SDQ · Sameday
+            </span>
           </div>
-          <span className="text-sm font-semibold tracking-tight">
-            {tenant?.name ?? 'DanCRM'}
-          </span>
         </div>
         <button
           onClick={() => setMobileOpen(false)}
@@ -66,20 +68,28 @@ export function Sidebar() {
         </button>
       </div>
 
-      <div className="px-2 pb-2">
+      <div className="px-3 pb-3">
         <button
           onClick={openCommandPalette}
-          className="flex w-full items-center gap-2 rounded-lg border border-border bg-background px-2.5 py-1.5 text-[13px] text-muted-foreground transition-colors hover:border-muted-foreground/25 hover:text-foreground"
+          className="group flex w-full items-center gap-2 rounded-lg border border-border bg-background/40 px-2.5 py-1.5 text-[13px] text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
         >
-          <Search className="h-3.5 w-3.5" />
-          <span className="flex-1 text-left">Cerca...</span>
-          <kbd className="hidden rounded border border-border px-1 py-0.5 text-2xs sm:block">⌘K</kbd>
+          <Search className="h-3.5 w-3.5 transition-colors group-hover:text-primary" />
+          <span className="flex-1 text-left">Cerca ovunque…</span>
+          <kbd className="hidden rounded border border-border px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground sm:block">
+            ⌘K
+          </kbd>
         </button>
       </div>
 
-      <nav className="flex-1 space-y-0.5 px-2 py-1">
+      <div className="px-3">
+        <p className="mb-1.5 px-2 font-mono text-[9px] uppercase tracking-[0.18em] text-muted-foreground">
+          Workspace
+        </p>
+      </div>
+      <nav className="flex-1 space-y-0.5 px-3">
         {navItems.map(({ to, label, icon: Icon }) => {
-          const isActive = currentPath === to || currentPath.startsWith(to + '/')
+          const isActive =
+            currentPath === to || currentPath.startsWith(to + '/')
           return (
             <Link
               key={to}
@@ -88,24 +98,45 @@ export function Sidebar() {
                 'group relative flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] font-medium transition-colors',
                 isActive
                   ? 'text-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
+                  : 'text-muted-foreground hover:text-foreground',
               )}
             >
               {isActive && (
                 <motion.div
                   layoutId="sidebar-active"
-                  className="absolute inset-0 rounded-lg bg-accent"
-                  transition={{ type: 'spring', duration: 0.3, bounce: 0.15 }}
+                  className="absolute inset-0 rounded-lg bg-accent ring-1 ring-primary/20"
+                  transition={{
+                    type: 'spring',
+                    duration: 0.35,
+                    bounce: 0.15,
+                  }}
                 />
               )}
-              <Icon className="relative z-10 h-4 w-4" />
+              {isActive && (
+                <motion.div
+                  layoutId="sidebar-active-dot"
+                  className="absolute -left-1 top-1/2 h-3 -translate-y-1/2 rounded-full bg-primary"
+                  style={{ width: 2 }}
+                  transition={{
+                    type: 'spring',
+                    duration: 0.35,
+                    bounce: 0.15,
+                  }}
+                />
+              )}
+              <Icon
+                className={cn(
+                  'relative z-10 h-4 w-4 transition-colors',
+                  isActive && 'text-primary',
+                )}
+              />
               <span className="relative z-10">{label}</span>
             </Link>
           )
         })}
       </nav>
 
-      <div className="space-y-0.5 border-t border-border px-2 py-2">
+      <div className="space-y-0.5 border-t border-border/60 px-3 py-2">
         {bottomItems.map(({ to, label, icon: Icon }) => {
           const isActive = currentPath === to
           return (
@@ -116,7 +147,7 @@ export function Sidebar() {
                 'flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] font-medium transition-colors',
                 isActive
                   ? 'bg-accent text-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
+                  : 'text-muted-foreground hover:text-foreground',
               )}
             >
               <Icon className="h-4 w-4" />
@@ -126,18 +157,22 @@ export function Sidebar() {
         })}
       </div>
 
-      <div className="border-t border-border px-2 py-2">
-        <div className="flex items-center justify-between rounded-lg px-2.5 py-1.5">
-          <div className="flex items-center gap-2.5">
+      <div className="border-t border-border/60 px-3 py-3">
+        <div className="flex items-center justify-between rounded-lg bg-muted/40 px-2 py-1.5 ring-1 ring-border/60">
+          <div className="flex min-w-0 items-center gap-2.5">
             <Avatar name={member?.full_name ?? 'U'} size="sm" />
             <div className="min-w-0">
-              <p className="truncate text-xs font-medium">{member?.full_name ?? 'Utente'}</p>
-              <p className="truncate text-2xs text-muted-foreground">{member?.role}</p>
+              <p className="truncate text-xs font-medium">
+                {member?.full_name ?? 'Utente'}
+              </p>
+              <p className="truncate font-mono text-[9px] uppercase tracking-[0.15em] text-muted-foreground">
+                {member?.role ?? 'member'}
+              </p>
             </div>
           </div>
           <button
             onClick={signOut}
-            className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
             title="Esci"
           >
             <LogOut className="h-3.5 w-3.5" />
@@ -149,13 +184,11 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Desktop sidebar */}
-      <aside className="hidden h-screen w-[220px] flex-shrink-0 flex-col border-r border-border bg-card lg:flex">
+      <aside className="surface-glass hidden h-screen w-[232px] flex-shrink-0 flex-col border-r border-border/60 lg:flex">
         {sidebarContent}
       </aside>
 
-      {/* Mobile hamburger */}
-      <div className="fixed left-0 top-0 z-40 flex h-12 w-full items-center gap-2 border-b border-border bg-card px-3 lg:hidden">
+      <div className="surface-glass fixed left-0 top-0 z-40 flex h-12 w-full items-center gap-2 border-b border-border/60 px-3 lg:hidden">
         <button
           onClick={() => setMobileOpen(true)}
           className="rounded-md p-1.5 text-muted-foreground hover:text-foreground"
@@ -163,17 +196,13 @@ export function Sidebar() {
           <Menu className="h-5 w-5" />
         </button>
         <div className="flex items-center gap-2">
-          <div
-            className="flex h-6 w-6 items-center justify-center rounded-md"
-            style={{ backgroundColor: tenant?.primary_color ?? '#3B82F6' }}
-          >
-            <Zap className="h-3 w-3 text-white" />
-          </div>
-          <span className="text-sm font-semibold">{tenant?.name ?? 'DanCRM'}</span>
+          <SdqLogo className="h-6 w-6" />
+          <span className="text-sm font-semibold">
+            {tenant?.name ?? 'DanCRM'}
+          </span>
         </div>
       </div>
 
-      {/* Mobile drawer */}
       <AnimatePresence>
         {mobileOpen && (
           <>
