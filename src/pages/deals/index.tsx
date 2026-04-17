@@ -15,6 +15,7 @@ import {
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { Plus, Building2, Kanban, ExternalLink } from 'lucide-react'
+import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 import type { Deal, PipelineStage, Company } from '@/types/database'
 import { formatCurrency } from '@/lib/utils'
@@ -93,7 +94,9 @@ export function DealsPage() {
       queryClient.invalidateQueries({ queryKey: ['deals'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
       setShowForm(false)
+      toast.success('Deal creato')
     },
+    onError: () => toast.error('Errore durante la creazione'),
   })
 
   const handleDragStart = (event: DragStartEvent) => {

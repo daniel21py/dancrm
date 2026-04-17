@@ -9,6 +9,7 @@ import {
   Settings,
   LogOut,
   Zap,
+  Search,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuthStore } from '@/stores/auth'
@@ -31,8 +32,12 @@ export function Sidebar() {
   const routerState = useRouterState()
   const currentPath = routerState.location.pathname
 
+  const openCommandPalette = () => {
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true, bubbles: true }))
+  }
+
   return (
-    <aside className="flex h-screen w-[240px] flex-col border-r border-border bg-card">
+    <aside className="flex h-screen w-[220px] flex-shrink-0 flex-col border-r border-border bg-card">
       <div className="flex items-center gap-2.5 px-4 py-4">
         <div
           className="flex h-7 w-7 items-center justify-center rounded-lg"
@@ -45,7 +50,18 @@ export function Sidebar() {
         </span>
       </div>
 
-      <nav className="flex-1 space-y-0.5 px-2 py-2">
+      <div className="px-2 pb-2">
+        <button
+          onClick={openCommandPalette}
+          className="flex w-full items-center gap-2 rounded-lg border border-border bg-background px-2.5 py-1.5 text-[13px] text-muted-foreground transition-colors hover:border-muted-foreground/25 hover:text-foreground"
+        >
+          <Search className="h-3.5 w-3.5" />
+          <span className="flex-1 text-left">Cerca...</span>
+          <kbd className="rounded border border-border px-1 py-0.5 text-2xs">⌘K</kbd>
+        </button>
+      </div>
+
+      <nav className="flex-1 space-y-0.5 px-2 py-1">
         {navItems.map(({ to, label, icon: Icon }) => {
           const isActive = currentPath === to || currentPath.startsWith(to + '/')
           return (
@@ -106,6 +122,7 @@ export function Sidebar() {
           <button
             onClick={signOut}
             className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            title="Esci"
           >
             <LogOut className="h-3.5 w-3.5" />
           </button>

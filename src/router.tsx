@@ -5,6 +5,7 @@ import { DashboardPage } from '@/pages/dashboard'
 import { ClientsPage } from '@/pages/clients/index'
 import { ClientDetailPage } from '@/pages/clients/detail'
 import { ContactsPage } from '@/pages/contacts'
+import { ContactDetailPage } from '@/pages/contacts/detail'
 import { DealsPage } from '@/pages/deals/index'
 import { DealDetailPage } from '@/pages/deals/detail'
 import { TasksPage } from '@/pages/tasks'
@@ -57,6 +58,12 @@ const contactsRoute = createRoute({
   component: ContactsPage,
 })
 
+const contactDetailRoute = createRoute({
+  getParentRoute: () => layoutRoute,
+  path: '/contacts/$id',
+  component: ContactDetailPage,
+})
+
 const dealsRoute = createRoute({
   getParentRoute: () => layoutRoute,
   path: '/deals',
@@ -97,6 +104,7 @@ const routeTree = rootRoute.addChildren([
     clientsRoute,
     clientDetailRoute,
     contactsRoute,
+    contactDetailRoute,
     dealsRoute,
     dealDetailRoute,
     tasksRoute,

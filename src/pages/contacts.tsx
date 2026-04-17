@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useNavigate } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
+import { toast } from 'sonner'
 import { Plus, Search, Users, Phone, Mail, Building2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import type { Contact, ContactRole, Company } from '@/types/database'
@@ -10,8 +12,8 @@ import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Avatar } from '@/components/ui/avatar'
-import { Spinner } from '@/components/ui/spinner'
 import { EmptyState } from '@/components/ui/empty-state'
+import { SkeletonCard } from '@/components/ui/skeleton'
 import { Dialog, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { Card } from '@/components/ui/card'
@@ -24,11 +26,12 @@ const roleConfig: Record<ContactRole, { label: string; variant: 'default' | 'sec
   altro: { label: 'Altro', variant: 'secondary' },
 }
 
-const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.03 } } }
-const item = { hidden: { opacity: 0, y: 6 }, show: { opacity: 1, y: 0 } }
+const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.04 } } }
+const item = { hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0 } }
 
 export function ContactsPage() {
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
   const { member } = useAuthStore()
   const [search, setSearch] = useState('')
   const [showForm, setShowForm] = useState(false)
@@ -71,7 +74,9 @@ export function ContactsPage() {
       queryClient.invalidateQueries({ queryKey: ['contacts'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
       setShowForm(false)
+      toast.success('Contatto creato')
     },
+    onError: () => toast.error('Errore durante la creazione'),
   })
 
   return (
@@ -98,13 +103,15 @@ export function ContactsPage() {
       </div>
 
       {isLoading ? (
-        <Spinner />
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} lines={3} />)}
+        </div>
       ) : contacts.length === 0 ? (
         <EmptyState
           icon={Users}
           title="Nessun contatto"
-          description="Aggiungi il tuo primo contatto per iniziare."
-          action={{ label: 'Nuovo contatto', onClick: () => setShowForm(true) }}
+          description={search ? 'Nessun risultato per la ricerca.' : 'Aggiungi il tuo primo contatto per iniziare.'}
+          action={!search ? { label: 'Nuovo contatto', onClick: () => setShowForm(true) } : undefined}
         />
       ) : (
         <motion.div
@@ -114,7 +121,11 @@ export function ContactsPage() {
           animate="show"
         >
           {contacts.map((contact) => (
-            <motion.div key={contact.id} variants={item}>
+            <motion.div
+              key={contact.id}
+              variants={item}
+              onClick={() => navigate({ to: '/contacts/$id', params: { id: contact.id } })}
+            >
               <Card className="group cursor-pointer p-4 transition-colors hover:border-muted-foreground/25">
                 <div className="mb-3 flex items-start gap-3">
                   <Avatar name={`${contact.first_name} ${contact.last_name}`} />
@@ -176,9 +187,7 @@ export function ContactsPage() {
 }
 
 function CreateContactForm({
-  companies,
-  onSubmit,
-  isLoading,
+  companies, onSubmit, isLoading,
 }: {
   companies: Pick<Company, 'id' | 'name'>[]
   onSubmit: (data: Partial<Contact>) => void
@@ -191,7 +200,14 @@ function CreateContactForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    onSubmit({ ...form, company_id: form.company_id || null })
+    onSubmit({
+      ...form,
+      job_title: form.job_title || null,
+      email: form.email || null,
+      phone: form.phone || null,
+      mobile: form.mobile || null,
+      company_id: form.company_id || null,
+    })
   }
 
   return (
@@ -212,8 +228,8 @@ function CreateContactForm({
           </Select>
         </div>
         <div className="space-y-1.5">
-          <Label>Titolo</Label>
-          <Input value={form.job_title} onChange={(e) => setForm(f => ({ ...f, job_title: e.target.value }))} />
+          <Label>Qualifica</Label>
+          <Input value={form.job_title} onChange={(e) => setForm(f => ({ ...f, job_title: e.target.value }))} placeholder="es. CEO, Sales Manager..." />
         </div>
         <div className="space-y-1.5">
           <Label>Email</Label>

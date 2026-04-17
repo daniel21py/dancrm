@@ -1,6 +1,7 @@
 import { Outlet } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
 import { Sidebar } from './sidebar'
+import { CommandPalette } from '@/components/command-palette'
 
 export function AppLayout() {
   return (
@@ -16,6 +17,7 @@ export function AppLayout() {
           <Outlet />
         </motion.div>
       </main>
+      <CommandPalette />
     </div>
   )
 }

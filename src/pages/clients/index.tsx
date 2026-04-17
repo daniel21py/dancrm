@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
+import { toast } from 'sonner'
 import { Plus, Search, Building2, Phone, Mail, MapPin } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import type { Company, CompanyStatus, CompanyType } from '@/types/database'
@@ -75,7 +76,9 @@ export function ClientsPage() {
       queryClient.invalidateQueries({ queryKey: ['companies'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
       setShowForm(false)
+      toast.success('Cliente creato')
     },
+    onError: () => toast.error('Errore durante la creazione'),
   })
 
   return (

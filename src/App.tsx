@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { RouterProvider } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
 import { Zap } from 'lucide-react'
+import { Toaster } from 'sonner'
 import { router } from '@/router'
 import { useAuthStore } from '@/stores/auth'
 
@@ -37,5 +38,19 @@ export default function App() {
     )
   }
 
-  return <RouterProvider router={router} />
+  return (
+    <>
+      <RouterProvider router={router} />
+      <Toaster
+        theme="dark"
+        position="bottom-right"
+        toastOptions={{
+          classNames: {
+            toast: 'border border-border bg-card text-foreground text-sm',
+            description: 'text-muted-foreground',
+          },
+        }}
+      />
+    </>
+  )
 }
