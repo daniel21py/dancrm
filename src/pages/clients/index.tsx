@@ -14,6 +14,7 @@ import { Spinner } from '@/components/ui/spinner'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Dialog, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
+import { useAuthStore } from '@/stores/auth'
 
 const statusConfig: Record<CompanyStatus, { label: string; variant: 'default' | 'secondary' | 'success' | 'warning' | 'destructive' }> = {
   prospect: { label: 'Prospect', variant: 'secondary' },
@@ -34,6 +35,7 @@ const typeLabels: Record<CompanyType, string> = {
 export function ClientsPage() {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
+  const { member } = useAuthStore()
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<CompanyStatus | ''>('')
   const [showForm, setShowForm] = useState(false)
@@ -61,7 +63,11 @@ export function ClientsPage() {
 
   const createCompany = useMutation({
     mutationFn: async (company: Partial<Company>) => {
-      const { data, error } = await supabase.from('companies').insert(company).select().single()
+      const { data, error } = await supabase
+        .from('companies')
+        .insert({ ...company, tenant_id: member!.tenant_id })
+        .select()
+        .single()
       if (error) throw error
       return data
     },

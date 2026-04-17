@@ -15,6 +15,7 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { Dialog, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { Card } from '@/components/ui/card'
+import { useAuthStore } from '@/stores/auth'
 
 const roleConfig: Record<ContactRole, { label: string; variant: 'default' | 'secondary' | 'success' | 'warning' }> = {
   decisore: { label: 'Decisore', variant: 'default' },
@@ -28,6 +29,7 @@ const item = { hidden: { opacity: 0, y: 6 }, show: { opacity: 1, y: 0 } }
 
 export function ContactsPage() {
   const queryClient = useQueryClient()
+  const { member } = useAuthStore()
   const [search, setSearch] = useState('')
   const [showForm, setShowForm] = useState(false)
 
@@ -57,7 +59,11 @@ export function ContactsPage() {
 
   const createContact = useMutation({
     mutationFn: async (contact: Partial<Contact>) => {
-      const { data, error } = await supabase.from('contacts').insert(contact).select().single()
+      const { data, error } = await supabase
+        .from('contacts')
+        .insert({ ...contact, tenant_id: member!.tenant_id })
+        .select()
+        .single()
       if (error) throw error
       return data
     },

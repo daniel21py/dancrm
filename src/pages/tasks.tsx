@@ -13,6 +13,7 @@ import { Spinner } from '@/components/ui/spinner'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Dialog, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
+import { useAuthStore } from '@/stores/auth'
 
 const statusIcons: Record<TaskStatus, typeof Circle> = {
   pending: Circle,
@@ -37,6 +38,7 @@ const priorityConfig: Record<TaskPriority, { label: string; variant: 'secondary'
 
 export function TasksPage() {
   const queryClient = useQueryClient()
+  const { member } = useAuthStore()
   const [showForm, setShowForm] = useState(false)
   const [filter, setFilter] = useState<'active' | 'done' | 'all'>('active')
 
@@ -66,7 +68,11 @@ export function TasksPage() {
 
   const createTask = useMutation({
     mutationFn: async (task: Partial<Task>) => {
-      const { data, error } = await supabase.from('tasks').insert(task).select().single()
+      const { data, error } = await supabase
+        .from('tasks')
+        .insert({ ...task, tenant_id: member!.tenant_id })
+        .select()
+        .single()
       if (error) throw error
       return data
     },

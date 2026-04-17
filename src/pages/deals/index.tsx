@@ -25,11 +25,13 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { Spinner } from '@/components/ui/spinner'
 import { Dialog, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
+import { useAuthStore } from '@/stores/auth'
 
 type DealWithCompany = Deal & { company: Pick<Company, 'id' | 'name'> | null }
 
 export function DealsPage() {
   const queryClient = useQueryClient()
+  const { member } = useAuthStore()
   const [activeDeal, setActiveDeal] = useState<DealWithCompany | null>(null)
   const [showForm, setShowForm] = useState(false)
 
@@ -79,7 +81,11 @@ export function DealsPage() {
 
   const createDeal = useMutation({
     mutationFn: async (deal: Partial<Deal>) => {
-      const { data, error } = await supabase.from('deals').insert(deal).select().single()
+      const { data, error } = await supabase
+        .from('deals')
+        .insert({ ...deal, tenant_id: member!.tenant_id })
+        .select()
+        .single()
       if (error) throw error
       return data
     },
