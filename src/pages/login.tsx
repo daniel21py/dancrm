@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { ArrowRight } from 'lucide-react'
+import { useNavigate } from '@tanstack/react-router'
 import { useAuthStore } from '@/stores/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -9,6 +10,7 @@ import { SdqLogo } from '@/components/sdq-logo'
 
 export function LoginPage() {
   const { signIn } = useAuthStore()
+  const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -19,8 +21,12 @@ export function LoginPage() {
     setLoading(true)
     setError('')
     const result = await signIn(email, password)
-    if (result.error) setError(result.error)
-    setLoading(false)
+    if (result.error) {
+      setError(result.error)
+      setLoading(false)
+      return
+    }
+    navigate({ to: '/dashboard' })
   }
 
   return (
