@@ -5,9 +5,11 @@ import { Zap } from 'lucide-react'
 import { Toaster } from 'sonner'
 import { router } from '@/router'
 import { useAuthStore } from '@/stores/auth'
+import { useThemeStore } from '@/stores/theme'
 
 export default function App() {
   const { loading, initialize } = useAuthStore()
+  const { theme } = useThemeStore()
 
   useEffect(() => {
     initialize()
@@ -42,7 +44,7 @@ export default function App() {
     <>
       <RouterProvider router={router} />
       <Toaster
-        theme="dark"
+        theme={theme}
         position="bottom-right"
         toastOptions={{
           classNames: {
